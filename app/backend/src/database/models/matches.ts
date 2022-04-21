@@ -22,23 +22,23 @@ Matche.init({
     primaryKey: true,
     type: INTEGER,
   },
-  home_team: {
+  homeTeam: {
     type: INTEGER,
     allowNull: false,
   },
-  home_team_goals: {
+  homeTeamGoals: {
     type: INTEGER,
     allowNull: false,
   },
-  away_team: {
+  awayTeam: {
     type: INTEGER,
     allowNull: false,
   },
-  away_team_goals: {
+  awayTeamGoals: {
     type: INTEGER,
     allowNull: false,
   },
-  in_progress: {
+  inProgress: {
     type: BOOLEAN,
     allowNull: false,
   },
