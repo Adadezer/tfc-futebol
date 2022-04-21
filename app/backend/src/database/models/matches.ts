@@ -24,18 +24,23 @@ Matche.init({
   },
   home_team: {
     type: INTEGER,
+    allowNull: false,
   },
   home_team_goals: {
     type: INTEGER,
+    allowNull: false,
   },
   away_team: {
     type: INTEGER,
+    allowNull: false,
   },
   away_team_goals: {
     type: INTEGER,
+    allowNull: false,
   },
   in_progress: {
     type: BOOLEAN,
+    allowNull: false,
   },
 }, {
   underscored: true,
