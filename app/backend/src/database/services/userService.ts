@@ -1,12 +1,12 @@
 import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
 import ILogin from '../../interfaces/ILogin';
-import User from '../models/users';
+import UserModel from '../models/users';
 
 const jwtSecret = fs.readFileSync('jwt.evaluation.key', 'utf-8');
 
-export default class LoginService {
-  constructor(private userModel = User) {}
+export default class UserService {
+  constructor(private userModel = UserModel) {}
 
   public async getLogin(login: ILogin) {
     const resultModel = await this.userModel.findOne({ where: { email: login.email } });

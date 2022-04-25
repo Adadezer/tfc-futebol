@@ -3,7 +3,7 @@ import ILogin from '../../interfaces/ILogin';
 import UserService from '../services/userService';
 
 export default class UserController {
-  constructor(private userService = new UserService()) {}
+  constructor(private userService: UserService) {}
 
   async getLogin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
