@@ -8,6 +8,15 @@ const jwtSecret = fs.readFileSync('jwt.evaluation.key', 'utf-8');
 export default class UserService {
   constructor(private userModel = UserModel) {}
 
+  public async getUser(user: string) {
+    const userValid = await this.userModel.findOne({ where: { email: user } });
+    console.log('users service:', userValid);
+    if (userValid) {
+      const { role } = userValid;
+      return role;
+    }
+  }
+
   public async getLogin(login: ILogin) {
     const resultModel = await this.userModel.findOne({ where: { email: login.email } });
     // console.log('result Service: ', result);

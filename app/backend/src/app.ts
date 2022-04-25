@@ -1,5 +1,5 @@
 import * as express from 'express';
-import routes from './routes/routerLogin.routes';
+import routerLogin from './routes/routerLogin.routes';
 
 class App {
   public app: express.Express;
@@ -9,7 +9,7 @@ class App {
     // ...
     this.app = express();
     this.config();
-    this.app.use(routes);
+    this.app.use('/login', routerLogin);
     // ...
   }
 
