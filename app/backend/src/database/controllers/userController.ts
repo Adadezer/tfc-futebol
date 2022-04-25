@@ -5,7 +5,7 @@ import UserService from '../services/userService';
 export default class UserController {
   constructor(private userService: UserService) {}
 
-  async getUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  public async getUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { decoded: { data } } = req.body;
       const user = await this.userService.getUser(data);

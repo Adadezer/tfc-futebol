@@ -1,3 +1,4 @@
+import * as bcryptjs from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
 import ILogin from '../../interfaces/ILogin';
@@ -10,7 +11,7 @@ export default class UserService {
 
   public async getUser(user: string) {
     const userValid = await this.userModel.findOne({ where: { email: user } });
-    console.log('users service:', userValid);
+    // console.log('users service:', userValid);
     if (userValid) {
       const { role } = userValid;
       return role;
@@ -20,6 +21,12 @@ export default class UserService {
   public async getLogin(login: ILogin) {
     const resultModel = await this.userModel.findOne({ where: { email: login.email } });
     // console.log('result Service: ', result);
+
+    if (!resultModel) return null;
+
+    const validUserPassword = await bcryptjs.compare(login.password, resultModel.password);
+
+    if (!validUserPassword) return null;
 
     if (resultModel) {
       const { id, username, role, email } = resultModel;
