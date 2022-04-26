@@ -1,5 +1,6 @@
 import { Model, INTEGER, BOOLEAN } from 'sequelize';
 import db from '.';
+import Team from './teams';
 
 class Matche extends Model {
   public id!: number; // exclamação pra dizer q o atributo é obrigatório
@@ -50,4 +51,6 @@ Matche.init({
   tableName: 'matches',
 });
 
+Team.hasMany(Matche, { foreignKey: 'homeTeam', as: 'Home_Team' });
+Team.hasMany(Matche, { foreignKey: 'awayTeam', as: 'Away_Team' });
 export default Matche;
