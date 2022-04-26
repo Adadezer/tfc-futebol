@@ -16,7 +16,7 @@ export default function validationLogin(req: Request, res: Response, next: NextF
   }
 
   if (password.length <= 6 || typeof password !== 'string') {
-    return res.status(400).json({ message: 'Incorrect email or password' });
+    return res.status(401).json({ message: 'Incorrect email or password' });
   }
   next();
 }

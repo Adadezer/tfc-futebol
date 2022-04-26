@@ -23,6 +23,10 @@ export default class UserController {
 
       const user = await this.userService.getLogin(login);
 
+      // console.log('user maldito: ', user);
+      if (user === null) {
+        return res.status(401).json({ message: 'email or password not exist' });
+      }
       return res.status(200).json(user);
     } catch (error) {
       next(error);

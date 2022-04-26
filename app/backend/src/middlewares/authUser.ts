@@ -16,7 +16,7 @@ const auth = async (req: Request, res: Response, next: NextFunction): Promise<Re
 
     next();
   } catch (error) {
-    next(error);
+    return res.status(401).json({ message: 'expired or invalid token' });
   }
 };
 export default auth;

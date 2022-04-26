@@ -23,11 +23,11 @@ export default class UserService {
     // console.log('result Service: ', result);
 
     if (!resultModel) return null;
-
+    // console.log('resultModel', resultModel);
     const validUserPassword = await bcryptjs.compare(login.password, resultModel.password);
 
+    // console.log('validUser: ', validUserPassword);
     if (!validUserPassword) return null;
-
     if (resultModel) {
       const { id, username, role, email } = resultModel;
       const result = { id, username, role, email };
