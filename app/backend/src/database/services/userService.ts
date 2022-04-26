@@ -3,13 +3,14 @@ import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
 import ILogin from '../../interfaces/ILogin';
 import UserModel from '../models/users';
+import IUser from '../../interfaces/IUser';
 
 const jwtSecret = fs.readFileSync('jwt.evaluation.key', 'utf-8');
 
 export default class UserService {
   constructor(private userModel = UserModel) {}
 
-  public async getUser(user: string) {
+  public async getUser(user: string): Promise<string | void> {
     const userValid = await this.userModel.findOne({ where: { email: user } });
     // console.log('users service:', userValid);
     if (userValid) {
@@ -18,7 +19,7 @@ export default class UserService {
     }
   }
 
-  public async getLogin(login: ILogin) {
+  public async getLogin(login: ILogin): Promise<IUser | null | void> {
     const resultModel = await this.userModel.findOne({ where: { email: login.email } });
     // console.log('result Service: ', result);
 
