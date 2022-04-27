@@ -9,4 +9,10 @@ export default class TeamsService {
     // console.log('teams Service', teams);
     return teams;
   }
+
+  public async getTeamById(id: string) {
+    const team = await this.teamsModel.findOne({ where: { id } });
+    // console.log('teamService: ', team);
+    return team;
+  }
 }

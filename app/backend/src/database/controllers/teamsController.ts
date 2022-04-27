@@ -13,4 +13,17 @@ export default class TeamsController {
       next(error);
     }
   }
+
+  public async getTeamById(req: Request, res: Response, next: NextFunction)
+    : Promise<Response | void> {
+    try {
+      const { id } = req.params;
+      // console.log('id params: ', typeof id);
+      const teamById = await this.teamsService.getTeamById(id);
+
+      return res.status(200).json(teamById);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
