@@ -8,6 +8,10 @@ export default class TeamsController {
     try {
       const teams = await this.teamsService.getTeams();
 
+      if (teams.length === 0) {
+        return res.status(404).json({ message: 'teams not found' });
+      }
+
       return res.status(200).json(teams);
     } catch (error) {
       next(error);
@@ -20,6 +24,10 @@ export default class TeamsController {
       const { id } = req.params;
       // console.log('id params: ', typeof id);
       const teamById = await this.teamsService.getTeamById(id);
+
+      if (!teamById) {
+        return res.status(404).json({ message: 'team not found' });
+      }
 
       return res.status(200).json(teamById);
     } catch (error) {

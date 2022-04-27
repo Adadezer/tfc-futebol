@@ -3,8 +3,10 @@ import * as chai from 'chai';
 import chaiHttp = require('chai-http');
 
 import { app } from '../app';
-import UsersModel from '../database/models/users';
 import * as bcryptjs from 'bcryptjs';
+import UsersModel from '../database/models/users';
+import TeamsModel from '../database/models/teams';
+import { allTeams, team } from './mockTeams';
 
 import { Response } from 'superagent';
 
@@ -144,6 +146,68 @@ describe('ROTA LOGIN', () => {
       .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
         expect(chaiHttpResponse).to.have.status(200);
         expect(chaiHttpResponse.body).to.be.equal('admin');
+    });
+  });
+});
+
+describe('ROTA TEAMS', () => {
+  let chaiHttpResponse: Response;
+
+  before(async () => {
+    sinon
+      .stub(TeamsModel, "findAll")
+      .resolves(allTeams as TeamsModel[]);
+  });
+
+  after(()=>{
+    (TeamsModel.findAll as sinon.SinonStub).restore();
+  })
+
+  describe('GET', () => {
+    it('(/teams) => verifica se é retornado o array de times', async () => {
+      chaiHttpResponse = await chai.request(app).get('/teams');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(allTeams); // deep = igualdade profunda
+    });
+
+    it('(/teams) => verifica se retorna array vazio caso os times nao forem encontrados', async () => {
+      (TeamsModel.findAll as sinon.SinonStub).restore();
+      sinon
+        .stub(TeamsModel, "findAll")
+        .resolves([] as TeamsModel[]);
+
+      chaiHttpResponse = await chai.request(app).get('/teams');
+
+      expect(chaiHttpResponse).to.have.status(404);
+      expect(chaiHttpResponse.body.message).to.be.equal('teams not found');
+    });
+
+    it('(/teams/id) => verifica se é retornado o time pelo seu id', async () => {
+      sinon
+        .stub(TeamsModel, "findOne")
+        .resolves(team as TeamsModel);
+      chaiHttpResponse = await chai.request(app).get('/teams/:id').send({
+        id: 5,
+        teamName: 'Cruzeiro'
+      });
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(team); // deep = igualdade profunda
+    });
+
+    it('(/teams/id) => verifica se retorna erro caso o time não seja encontrado', async () => {
+      (TeamsModel.findOne as sinon.SinonStub).restore();
+      sinon
+        .stub(TeamsModel, "findOne")
+        .resolves(null);
+      chaiHttpResponse = await chai.request(app).get('/teams/:id').send({
+        id: 17,
+        teamName: 'Time Não Encontrado'
+      });
+
+      expect(chaiHttpResponse).to.have.status(404);
+      expect(chaiHttpResponse.body.message).to.be.equal('team not found');
     });
   });
 });
