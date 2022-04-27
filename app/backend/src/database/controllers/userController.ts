@@ -8,8 +8,9 @@ export default class UserController {
   public async getUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { decoded: { data } } = req.body;
+      // console.log('data: ', data);
       const user = await this.userService.getUser(data);
-      // console.log('users controller:', users);
+      // console.log('userGet controller:', user);
       return res.status(200).json(user);
     } catch (error) {
       next(error);
@@ -23,10 +24,11 @@ export default class UserController {
 
       const user = await this.userService.getLogin(login);
 
-      // console.log('user maldito: ', user);
-      if (user === null) {
-        return res.status(401).json({ message: 'email or password not exist' });
+      if (!user) {
+        return res.status(401).json({ message: 'email not exist' });
       }
+      // console.log('user maldito: ', user);
+
       return res.status(200).json(user);
     } catch (error) {
       next(error);

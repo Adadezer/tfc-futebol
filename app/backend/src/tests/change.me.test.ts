@@ -67,38 +67,60 @@ describe('ROTA LOGIN', () => {
     });
 
     it('verifica se o email de login está cadastrado', async () => {
+      (UsersModel.findOne as sinon.SinonStub).restore();
+      sinon
+      .stub(UsersModel, "findOne")
+      .resolves(null);
+      
       chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email@email.com',
+        email: 'emaildfgfd@email.com',
         password: '123456789'
       });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('email or password not exist');
+      
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('email not exist');
+      
     });
 
     it('verifica se a senha de login está correta', async () => {
+      sinon
+      .stub(bcryptjs, "compare")
+      .resolves(false);
+      
       chaiHttpResponse = await chai.request(app).post('/login').send({
         email: 'email@email.com',
-        password: 'passValidoMasErrado'
+        password: 'senhaErrada'
       });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('email or password not exist');
+      
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('email not exist');
     });
 
     it('verifica se o login é válido', async () => {
+      (bcryptjs.compare as sinon.SinonStub).restore();
+      (UsersModel.findOne as sinon.SinonStub).restore();
       sinon
-        .stub(bcryptjs, "compare")
-        .resolves(true);
+      .stub(bcryptjs, "compare")
+      .resolves(true);
+
+      sinon
+      .stub(UsersModel, "findOne")
+      .resolves({
+        id: 1,
+        username: 'user1',
+        role: 'admin',
+        email: 'email@email.com',
+        password: '123456789'
+      } as UsersModel);
       
       chaiHttpResponse = await chai.request(app).post('/login').send({
         email: 'email@email.com',
         password: '123456789'
       });
-
+      
       expect(chaiHttpResponse).to.have.status(200);
       expect(chaiHttpResponse.body.user).to.be.keys('id', 'username', 'role', 'email');
       expect(chaiHttpResponse.body.token).to.an('string');
-
-      (bcryptjs.compare as sinon.SinonStub).restore();
     });
   });
 
@@ -114,6 +136,14 @@ describe('ROTA LOGIN', () => {
       .set({ authorization: 'sdfnçdsfbsd' });
         expect(chaiHttpResponse).to.have.status(401);
         expect(chaiHttpResponse.body.message).to.be.equal('expired or invalid token');
+    });
+
+    it('verifica o retorno do token', async () => {
+      // não precisa mockar aqui, pois o mock acima ja tem o email e o role
+      chaiHttpResponse = await chai.request(app).get('/login/validate')
+      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
+        expect(chaiHttpResponse).to.have.status(200);
+        expect(chaiHttpResponse.body).to.be.equal('admin');
     });
   });
 });

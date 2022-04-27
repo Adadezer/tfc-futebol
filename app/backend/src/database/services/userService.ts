@@ -12,23 +12,24 @@ export default class UserService {
 
   public async getUser(user: string): Promise<string | void> {
     const userValid = await this.userModel.findOne({ where: { email: user } });
-    // console.log('users service:', userValid);
+    // console.log('userGET service:', userValid);
     if (userValid) {
       const { role } = userValid;
       return role;
     }
   }
 
-  public async getLogin(login: ILogin): Promise<IUser | null | void> {
+  public async getLogin(login: ILogin): Promise<IUser | void > {
     const resultModel = await this.userModel.findOne({ where: { email: login.email } });
-    // console.log('result Service: ', result);
-
-    if (!resultModel) return null;
     // console.log('resultModel', resultModel);
+
+    if (!resultModel) return;
     const validUserPassword = await bcryptjs.compare(login.password, resultModel.password);
 
     // console.log('validUser: ', validUserPassword);
-    if (!validUserPassword) return null;
+
+    if (!validUserPassword) return;
+
     if (resultModel) {
       const { id, username, role, email } = resultModel;
       const result = { id, username, role, email };
