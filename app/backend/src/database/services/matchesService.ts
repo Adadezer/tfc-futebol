@@ -1,10 +1,11 @@
 import MatchesModel from '../models/matches';
 import TeamModel from '../models/teams';
+import IMatchesCustom from '../../interfaces/IMatchesCustom';
 
 export default class MatchesService {
   constructor(private matchesMoldel = MatchesModel) {}
 
-  public async getAllMatches() {
+  public async getAllMatches(): Promise<IMatchesCustom[]> {
     const matches = await this.matchesMoldel.findAll({
       include: [
         /*  dentro da tabela matches, vou procurar o model de Team, onde ele é chamado de 'teamHome', buscar o conteudo da coluna 'teamName', e incluir esse resultado no resuldado trago pelo findAll (https://tableless.com.br/sequelize-a-solu%C3%A7%C3%A3o-para-seus-relacionamentos/) */
@@ -13,6 +14,6 @@ export default class MatchesService {
       ],
     });
 
-    return matches;
+    return matches as IMatchesCustom[];
   }
 }
