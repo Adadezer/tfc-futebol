@@ -20,7 +20,7 @@ router.get('/', (req, res, next) => matchesController.getAllMatches(req, res, ne
 router.post(
   '/',
   authUser,
-  (req, res, next) => matchesController.createMatchProgressTrue(req, res, next),
+  (req, res) => matchesController.createMatchProgressTrue(req, res),
 );
 
 export default router;

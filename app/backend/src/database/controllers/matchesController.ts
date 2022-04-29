@@ -23,10 +23,16 @@ export default class MatchesController {
     }
   }
 
-  public async createMatchProgressTrue(req: Request, res: Response, next: NextFunction)
+  public async createMatchProgressTrue(req: Request, res: Response)
     :Promise<Response | void> {
     try {
       const { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress } = req.body;
+
+      if (homeTeam === awayTeam) {
+        return res.status(401).json({
+          message: 'It is not possible to create a match with two equal teams',
+        });
+      }
 
       if (inProgress) {
         const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
@@ -36,7 +42,7 @@ export default class MatchesController {
         return res.status(201).json(matchCreated);
       }
     } catch (error) {
-      next(error);
+      return res.status(404).json({ message: 'There is no team with such id!' });
     }
   }
 
