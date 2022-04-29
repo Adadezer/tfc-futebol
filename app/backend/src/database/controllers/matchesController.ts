@@ -23,7 +23,7 @@ export default class MatchesController {
     }
   }
 
-  public async createMatchProgressTrue(req: Request, res: Response)
+  public async createMatchProgressTrue(req: Request, res: Response, next: NextFunction)
     :Promise<Response | void> {
     try {
       const { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress } = req.body;
@@ -34,15 +34,15 @@ export default class MatchesController {
         });
       }
 
-      if (inProgress) {
-        const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
+      const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
 
-        const matchCreated = await this.matchesService.createMatchProgressTrue(matchData);
+      const matchCreated = await this.matchesService.createMatchProgressTrue(matchData);
 
-        return res.status(201).json(matchCreated);
-      }
+      return res.status(201).json(matchCreated);
     } catch (error) {
+      next(error);
       return res.status(404).json({ message: 'There is no team with such id!' });
+      // cai no erro pois homeTeam e awayTeam são foreinKey da tabela Team, se a requisição nao achar o id na tabela, ele nao cria a partida e da o erro
     }
   }
 
