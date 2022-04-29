@@ -6,7 +6,10 @@ import { app } from '../app';
 import * as bcryptjs from 'bcryptjs';
 import UsersModel from '../database/models/users';
 import TeamsModel from '../database/models/teams';
-import { allTeams, team } from './mockTeams';
+import { allTeams, team } from './mocks/mockTeams';
+import MatchesModel from '../database/models/matches';
+import IMatchesCustom from '../interfaces/IMatchesCustom';
+import { matchesFull, matchesTrue, matchesFalse } from './mocks/mockMatches';
 
 import { Response } from 'superagent';
 
@@ -36,6 +39,29 @@ describe('ROTA LOGIN', () => {
   after(()=>{
     (UsersModel.findOne as sinon.SinonStub).restore();
   })
+
+  describe('GET', () => {
+    it('caso o token não exista', async () => {
+      chaiHttpResponse = await chai.request(app).get('/login/validate').send();
+        expect(chaiHttpResponse).to.have.status(401);
+        expect(chaiHttpResponse.body.message).to.be.equal('Token not found');
+    });
+
+    it('caso o token esteja errado', async () => {
+      chaiHttpResponse = await chai.request(app).get('/login/validate')
+      .set({ authorization: 'sdfnçdsfbsd' });
+        expect(chaiHttpResponse).to.have.status(401);
+        expect(chaiHttpResponse.body.message).to.be.equal('expired or invalid token');
+    });
+
+    it('verifica o retorno do token', async () => {
+      // não precisa mockar aqui, pois o mock acima ja tem o email e o role
+      chaiHttpResponse = await chai.request(app).get('/login/validate')
+      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
+        expect(chaiHttpResponse).to.have.status(200);
+        expect(chaiHttpResponse.body).to.be.equal('admin');
+    });
+  });
 
   describe('POST', () => {
     it('verifica mensagem de erro quando apenas o email é passado', async () => {
@@ -81,7 +107,6 @@ describe('ROTA LOGIN', () => {
       
       expect(chaiHttpResponse).to.have.status(401);
       expect(chaiHttpResponse.body.message).to.be.equal('email not exist');
-      
     });
 
     it('verifica se a senha de login está correta', async () => {
@@ -124,28 +149,21 @@ describe('ROTA LOGIN', () => {
       expect(chaiHttpResponse.body.user).to.be.keys('id', 'username', 'role', 'email');
       expect(chaiHttpResponse.body.token).to.an('string');
     });
-  });
 
-  describe('GET', () => {
-    it('caso o token não exista', async () => {
-      chaiHttpResponse = await chai.request(app).get('/login/validate').send();
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('Token not found');
-    });
+    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (bcryptjs.compare as sinon.SinonStub).restore();
+      (UsersModel.findOne as sinon.SinonStub).restore();
+      sinon
+        .stub(UsersModel, "findOne")
+        .throws('');
 
-    it('caso o token esteja errado', async () => {
-      chaiHttpResponse = await chai.request(app).get('/login/validate')
-      .set({ authorization: 'sdfnçdsfbsd' });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('expired or invalid token');
-    });
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'email@email.com',
+        password: '123456789'
+      });
 
-    it('verifica o retorno do token', async () => {
-      // não precisa mockar aqui, pois o mock acima ja tem o email e o role
-      chaiHttpResponse = await chai.request(app).get('/login/validate')
-      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
-        expect(chaiHttpResponse).to.have.status(200);
-        expect(chaiHttpResponse.body).to.be.equal('admin');
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
     });
   });
 });
@@ -183,7 +201,19 @@ describe('ROTA TEAMS', () => {
       expect(chaiHttpResponse.body.message).to.be.equal('teams not found');
     });
 
-    it('(/teams/id) => verifica se é retornado o time pelo seu id', async () => {
+    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (TeamsModel.findAll as sinon.SinonStub).restore();
+      sinon
+        .stub(TeamsModel, "findAll")
+        .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/teams');
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+
+    it('(/teams/:id) => verifica se é retornado o time pelo seu id', async () => {
       sinon
         .stub(TeamsModel, "findOne")
         .resolves(team as TeamsModel);
@@ -196,7 +226,7 @@ describe('ROTA TEAMS', () => {
       expect(chaiHttpResponse.body).to.be.deep.equal(team); // deep = igualdade profunda
     });
 
-    it('(/teams/id) => verifica se retorna erro caso o time não seja encontrado', async () => {
+    it('(/teams/:id) => verifica se retorna erro caso o time não seja encontrado', async () => {
       (TeamsModel.findOne as sinon.SinonStub).restore();
       sinon
         .stub(TeamsModel, "findOne")
@@ -208,6 +238,84 @@ describe('ROTA TEAMS', () => {
 
       expect(chaiHttpResponse).to.have.status(404);
       expect(chaiHttpResponse.body.message).to.be.equal('team not found');
+    });
+
+    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (TeamsModel.findOne as sinon.SinonStub).restore();
+        
+      sinon
+      .stub(TeamsModel, "findOne")
+      .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/teams/:id').send({
+        id: 5,
+        teamName: 'Cruzeiro'
+      });
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
+});
+
+describe('ROTA MATCHES', () => {
+  let chaiHttpResponse: Response;
+
+  before(async () => {
+    sinon
+      .stub(MatchesModel, "findAll")
+      .resolves( matchesFull as IMatchesCustom[]);
+  });
+
+  after(()=>{
+    (MatchesModel.findAll as sinon.SinonStub).restore();
+  })
+
+  describe('GET', () => {
+    it('(/matches) => verifica se é retornado o array de matches corretamente', async () => {
+      chaiHttpResponse = await chai.request(app).get('/matches');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(matchesFull);
+    });
+
+    it('(/matches?inProgress=true) => verifica se é retornado o array de matches: inProgress = true', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+
+      sinon
+      .stub(MatchesModel, "findAll")
+      .resolves(matchesTrue as IMatchesCustom[]);
+
+      chaiHttpResponse = await chai.request(app).get('/matches?inProgress=true');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(matchesTrue);
+    });
+
+    it('(/matches?inProgress=false) => verifica se é retornado o array de matches: inProgress = false', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+        
+      sinon
+      .stub(MatchesModel, "findAll")
+      .resolves(matchesFalse as IMatchesCustom[]);
+
+      chaiHttpResponse = await chai.request(app).get('/matches?inProgress=false');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(matchesFalse);
+    });
+
+    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+        
+      sinon
+      .stub(MatchesModel, "findAll")
+      .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/matches');
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
     });
   });
 });
