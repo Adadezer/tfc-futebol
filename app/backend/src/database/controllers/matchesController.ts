@@ -23,14 +23,31 @@ export default class MatchesController {
     }
   }
 
-  public async createMatches(req: Request, res: Response, next: NextFunction) {
+  public async createMatchProgressTrue(req: Request, res: Response, next: NextFunction)
+    :Promise<Response | void> {
     try {
       const { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress } = req.body;
-      const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
 
-      const matchCreated = await this.matchesService.createMatches(matchData);
+      if (inProgress) {
+        const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
 
-      return res.status(201).json(matchCreated);
+        const matchCreated = await this.matchesService.createMatchProgressTrue(matchData);
+
+        return res.status(201).json(matchCreated);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async createMatchProgressFalse(req: Request, res: Response, next: NextFunction)
+    :Promise<Response | void> {
+    try {
+      const { id } = req.params;
+
+      const matchUpdated = await this.matchesService.createMatchProgressFalse(id);
+
+      return res.status(200).json(matchUpdated);
     } catch (error) {
       next(error);
     }

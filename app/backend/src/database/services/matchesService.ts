@@ -4,10 +4,10 @@ import IMatchesCustom from '../../interfaces/IMatchesCustom';
 import IMatchesCreate from '../../interfaces/IMatchesCreate';
 
 export default class MatchesService {
-  constructor(private matchesMoldel = MatchesModel) {}
+  constructor(private matchesModel = MatchesModel) {}
 
   public async getAllMatches(): Promise<IMatchesCustom[]> {
-    const matches = await this.matchesMoldel.findAll({
+    const matches = await this.matchesModel.findAll({
       include: [
         /*  dentro da tabela matches, vou procurar o model de Team, onde ele é chamado de 'teamHome', buscar o conteudo da coluna 'teamName', e incluir esse resultado no resuldado trago pelo findAll (https://tableless.com.br/sequelize-a-solu%C3%A7%C3%A3o-para-seus-relacionamentos/) */
         { model: TeamModel, as: 'teamHome', attributes: ['teamName'] },
@@ -18,9 +18,16 @@ export default class MatchesService {
     return matches as IMatchesCustom[];
   }
 
-  public async createMatches(match: IMatchesCreate) {
-    const matchCreate = await this.matchesMoldel.create(match);
+  public async createMatchProgressTrue(match: IMatchesCreate): Promise<object> {
+    const matchCreate = await this.matchesModel.create(match);
 
     return matchCreate;
+  }
+
+  public async createMatchProgressFalse(id: string): Promise<MatchesModel | null> {
+    await this.matchesModel.update({ inProgress: false }, { where: { id } });
+
+    const matchUpdated = await this.matchesModel.findOne({ where: { id } });
+    return matchUpdated;
   }
 }

@@ -13,6 +13,7 @@ const auth = async (req: Request, res: Response, next: NextFunction): Promise<Re
     const decoded = jwt.verify(token, jwtSecret);
     // console.log('decoded:', decoded);
     req.body = { ...req.body, decoded };
+
     next();
   } catch (error) {
     return res.status(401).json({ message: 'expired or invalid token' });
