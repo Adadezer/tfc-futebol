@@ -22,4 +22,17 @@ export default class MatchesController {
       next(error);
     }
   }
+
+  public async createMatches(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress } = req.body;
+      const matchData = { homeTeam, awayTeam, homeTeamGoals, awayTeamGoals, inProgress };
+
+      const matchCreated = await this.matchesService.createMatches(matchData);
+
+      return res.status(201).json(matchCreated);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

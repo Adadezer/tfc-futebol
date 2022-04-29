@@ -1,6 +1,7 @@
 import MatchesModel from '../models/matches';
 import TeamModel from '../models/teams';
 import IMatchesCustom from '../../interfaces/IMatchesCustom';
+import IMatchesCreate from '../../interfaces/IMatchesCreate';
 
 export default class MatchesService {
   constructor(private matchesMoldel = MatchesModel) {}
@@ -15,5 +16,11 @@ export default class MatchesService {
     });
 
     return matches as IMatchesCustom[];
+  }
+
+  public async createMatches(match: IMatchesCreate) {
+    const matchCreate = await this.matchesMoldel.create(match);
+
+    return matchCreate;
   }
 }
