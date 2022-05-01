@@ -118,3 +118,21 @@ export const matchesFalse = [
 		}
 	}
 ]
+
+export const matchCreatedProgressTrue = {
+	"id": 49,
+	"homeTeam": 5,
+	"awayTeam": 8,
+	"homeTeamGoals": 2,
+	"awayTeamGoals": 2,
+	"inProgress": true
+}
+
+export const matchCreatedProgressFalse = {
+	"id": 43,
+	"homeTeam": 11,
+	"homeTeamGoals": 0,
+	"awayTeam": 10,
+	"awayTeamGoals": 0,
+	"inProgress": false
+}

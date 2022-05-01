@@ -5,16 +5,12 @@ import UserService from '../services/userService';
 export default class UserController {
   constructor(private userService: UserService) {}
 
-  public async getUser(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const { decoded: { data } } = req.body;
-      // console.log('data: ', data);
-      const user = await this.userService.getUser(data);
-      // console.log('userGet controller:', user);
-      return res.status(200).json(user);
-    } catch (error) {
-      next(error);
-    }
+  public async getUser(req: Request, res: Response): Promise<Response | void> {
+    const { decoded: { data } } = req.body;
+    // console.log('data: ', data);
+    const user = await this.userService.getUser(data);
+    // console.log('userGet controller:', user);
+    return res.status(200).json(user);
   }
 
   public async getLogin(req: Request, res: Response, next: NextFunction): Promise<Response | void> {

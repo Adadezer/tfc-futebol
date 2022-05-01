@@ -10,7 +10,7 @@ const router = Router();
 const userService = new UserService();
 const userController = new UserController(userService);
 
-router.get('/validate', authUser, (req, res, next) => userController.getUser(req, res, next));
+router.get('/validate', authUser, (req, res) => userController.getUser(req, res));
 
 router.post(
   '/',

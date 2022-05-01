@@ -9,7 +9,7 @@ import TeamsModel from '../database/models/teams';
 import { allTeams, team } from './mocks/mockTeams';
 import MatchesModel from '../database/models/matches';
 import IMatchesCustom from '../interfaces/IMatchesCustom';
-import { matchesFull, matchesTrue, matchesFalse } from './mocks/mockMatches';
+import { matchesFull, matchesTrue, matchesFalse, matchCreatedProgressTrue, matchCreatedProgressFalse } from './mocks/mockMatches';
 
 import { Response } from 'superagent';
 
@@ -43,23 +43,26 @@ describe('ROTA LOGIN', () => {
   describe('GET', () => {
     it('caso o token não exista', async () => {
       chaiHttpResponse = await chai.request(app).get('/login/validate').send();
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('Token not found');
+
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('Token not found');
     });
 
     it('caso o token esteja errado', async () => {
       chaiHttpResponse = await chai.request(app).get('/login/validate')
       .set({ authorization: 'sdfnçdsfbsd' });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('expired or invalid token');
+
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('expired or invalid token');
     });
 
     it('verifica o retorno do token', async () => {
       // não precisa mockar aqui, pois o mock acima ja tem o email e o role
       chaiHttpResponse = await chai.request(app).get('/login/validate')
       .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
-        expect(chaiHttpResponse).to.have.status(200);
-        expect(chaiHttpResponse.body).to.be.equal('admin');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.equal('admin');
     });
   });
 
@@ -316,6 +319,99 @@ describe('ROTA MATCHES', () => {
 
       expect(chaiHttpResponse).to.have.status(500);
       expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
+
+  describe('POST', () => {
+    before(async () => {
+      sinon
+        .stub(MatchesModel, "create")
+        .resolves(matchCreatedProgressTrue as MatchesModel);
+
+      sinon
+        .stub(MatchesModel, "findOne")
+        .resolves({
+          id: 43,
+          homeTeam: 11,
+          homeTeamGoals: 0,
+          awayTeam: 10,
+          awayTeamGoals: 0,
+          inProgress: false
+        } as MatchesModel)
+    });
+
+    after(() => {
+      (MatchesModel.create as sinon.SinonStub).restore();
+      (MatchesModel.findOne as sinon.SinonStub).restore();
+    });
+
+    it('(/matches) => salva no banco uma partida com o inProgress = true', async () => {
+      chaiHttpResponse = await chai.request(app).post('/matches')
+        .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'})
+        .send({
+        homeTeam: 5,
+        awayTeam: 8,
+        homeTeamGoals: 2,
+        awayTeamGoals: 2,
+        inProgress: true
+      });
+      
+      expect(chaiHttpResponse).to.have.status(201);
+      expect(chaiHttpResponse.body).to.be.deep.equal(matchCreatedProgressTrue); 
+      expect(chaiHttpResponse.body).to.be.keys('id', 'homeTeam', 'awayTeam', 'homeTeamGoals', 'awayTeamGoals', 'inProgress');
+      expect(chaiHttpResponse.body).to.be.an('object');
+    });
+
+    it('(/matches:id/finish) => salva no banco uma partida com o inProgress = false', async () => {     
+      chaiHttpResponse = await chai.request(app).patch('/matches/43/finish')
+        .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'});
+      
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(matchCreatedProgressFalse); 
+      expect(chaiHttpResponse.body).to.be.keys('id', 'homeTeam', 'awayTeam', 'homeTeamGoals', 'awayTeamGoals', 'inProgress');
+      expect(chaiHttpResponse.body).to.be.an('object');
+    });
+
+    it('(/matches:id/finish) => verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findOne as sinon.SinonStub).restore();
+        
+      sinon
+      .stub(MatchesModel, "findOne")
+      .throws('');
+
+      chaiHttpResponse = await chai.request(app).patch('/matches/43/finish')
+      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'});
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+
+    it('(/matches) => verifica mensagem de erro ao passar times iguais', async () => {     
+      chaiHttpResponse = await chai.request(app).post('/matches')
+        .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'})
+        .send({homeTeam: 5, awayTeam: 5});
+      
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('It is not possible to create a match with two equal teams');
+    });
+
+    it('(/matches) => verifica mensagem de erro ao passar um time que não existe', async () => {
+      (MatchesModel.create as sinon.SinonStub).restore();
+      sinon
+      .stub(MatchesModel, "create")
+      .throws('');
+
+      chaiHttpResponse = await chai.request(app).post('/matches')
+        .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'})
+        .send({
+          homeTeam: 17,
+          awayTeam: 18,
+          homeTeamGoals: 2,
+          awayTeamGoals: 2
+        });
+      
+      expect(chaiHttpResponse).to.have.status(404);
+      expect(chaiHttpResponse.body.message).to.be.equal('There is no team with such id!');
     });
   });
 });
