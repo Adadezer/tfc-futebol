@@ -322,7 +322,7 @@ describe('ROTA MATCHES', () => {
     });
   });
 
-  describe('POST', () => {
+  describe('POST e PATCH', () => {
     before(async () => {
       sinon
         .stub(MatchesModel, "create")
@@ -412,6 +412,52 @@ describe('ROTA MATCHES', () => {
       
       expect(chaiHttpResponse).to.have.status(404);
       expect(chaiHttpResponse.body.message).to.be.equal('There is no team with such id!');
+    });
+
+    it('(/matches:id) => atualiza uma partida em andamento', async () => {
+      (MatchesModel.findOne as sinon.SinonStub).restore();
+
+      sinon
+        .stub(MatchesModel, "findOne")
+        .resolves({
+          id: 40,
+          homeTeam: 12,
+          homeTeamGoals: 3,
+          awayTeam: 8,
+          awayTeamGoals: 1,
+          inProgress: false
+        } as MatchesModel);
+        
+      chaiHttpResponse = await chai.request(app).patch('/matches/40')
+        .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'})
+        .send({
+          "homeTeamGoals": 3,
+          "awayTeamGoals": 1
+        });
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal({
+        id: 40,
+        homeTeam: 12,
+        homeTeamGoals: 3,
+        awayTeam: 8,
+        awayTeamGoals: 1,
+        inProgress: false
+      });
+    });
+
+    it('(/matches:id) => verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findOne as sinon.SinonStub).restore();
+        
+      sinon
+      .stub(MatchesModel, "findOne")
+      .throws('');
+
+      chaiHttpResponse = await chai.request(app).patch('/matches/40')
+      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'});
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
     });
   });
 });
