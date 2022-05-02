@@ -40,18 +40,35 @@ export default class MatchesController {
 
       return res.status(201).json(matchCreated);
     } catch (error) {
-      // next(error);
       return res.status(404).json({ message: 'There is no team with such id!' });
       // cai no erro pois homeTeam e awayTeam são foreinKey da tabela Team, se a requisição nao achar o id na tabela, ele nao cria a partida e da o erro
     }
   }
 
-  public async createMatchProgressFalse(req: Request, res: Response, next: NextFunction)
+  public async updateMatchProgressFalse(req: Request, res: Response, next: NextFunction)
     :Promise<Response | void> {
     try {
       const { id } = req.params;
 
-      const matchUpdated = await this.matchesService.createMatchProgressFalse(id);
+      const matchUpdated = await this.matchesService.updateMatchProgressFalse(id);
+
+      return res.status(200).json(matchUpdated);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async updateMatchProgressTrue(req: Request, res: Response, next: NextFunction)
+    :Promise<Response | void> {
+    try {
+      const { id } = req.params;
+
+      const { homeTeamGoals, awayTeamGoals } = req.body;
+
+      const matchUpdated = await this.matchesService.updateMatchProgressTrue(
+        id,
+        { homeTeamGoals, awayTeamGoals },
+      );
 
       return res.status(200).json(matchUpdated);
     } catch (error) {

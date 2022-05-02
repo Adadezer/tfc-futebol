@@ -12,7 +12,13 @@ const matchesController = new MatchesController(matchesService);
 router.patch(
   '/:id/finish',
   authUser,
-  (req, res, next) => matchesController.createMatchProgressFalse(req, res, next),
+  (req, res, next) => matchesController.updateMatchProgressFalse(req, res, next),
+);
+
+router.patch(
+  '/:id',
+  authUser,
+  (req, res, next) => matchesController.updateMatchProgressTrue(req, res, next),
 );
 
 router.get('/', (req, res, next) => matchesController.getAllMatches(req, res, next));

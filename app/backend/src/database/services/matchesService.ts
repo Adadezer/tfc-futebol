@@ -2,6 +2,7 @@ import MatchesModel from '../models/matches';
 import TeamModel from '../models/teams';
 import IMatchesCustom from '../../interfaces/IMatchesCustom';
 import IMatchesCreate from '../../interfaces/IMatchesCreate';
+import IUpdateMatchProgressTrue from '../../interfaces/IUpdateMatchProgressTrue';
 
 export default class MatchesService {
   constructor(private matchesModel = MatchesModel) {}
@@ -24,8 +25,19 @@ export default class MatchesService {
     return matchCreate;
   }
 
-  public async createMatchProgressFalse(id: string): Promise<MatchesModel | null> {
+  public async updateMatchProgressFalse(id: string): Promise<MatchesModel | null> {
     await this.matchesModel.update({ inProgress: false }, { where: { id } });
+
+    const matchUpdated = await this.matchesModel.findOne({ where: { id } });
+    return matchUpdated;
+  }
+
+  public async updateMatchProgressTrue(id: string, match: IUpdateMatchProgressTrue)
+    :Promise<IUpdateMatchProgressTrue | null> {
+    await this.matchesModel.update(
+      { homeTeamGoals: match.homeTeamGoals, awayTeamGoals: match.awayTeamGoals },
+      { where: { id } },
+    );
 
     const matchUpdated = await this.matchesModel.findOne({ where: { id } });
     return matchUpdated;
