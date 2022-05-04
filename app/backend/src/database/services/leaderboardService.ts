@@ -72,7 +72,7 @@ export default class LeaderboardService {
     });
   }
 
-  public async goalsBalance(leaderboard: ILeaderboard[]) {
+  public async goalsBalanceHome(leaderboard: ILeaderboard[]) {
     (await this.finishedMatches()).forEach((match) => {
       const teamData = leaderboard.find((team) => match.teamHome.teamName === team.name);
       if (!teamData) return null;
@@ -80,9 +80,67 @@ export default class LeaderboardService {
     });
   }
 
-  public async efficiency(leaderboard: ILeaderboard[]) {
+  public async efficiencyHome(leaderboard: ILeaderboard[]) {
     (await this.finishedMatches()).forEach((match) => {
       const teamData = leaderboard.find((team) => match.teamHome.teamName === team.name);
+      if (!teamData) return null;
+      const percentageUse = (teamData.totalPoints / (teamData.totalGames * 3)) * 100;
+      teamData.efficiency = Number(percentageUse.toFixed(2));
+    });
+  }
+
+  public async teamAwayWinner(leaderboard: ILeaderboard[]) {
+    (await this.finishedMatches()).forEach((match) => {
+      if (match.homeTeamGoals < match.awayTeamGoals) {
+        const gameResults = leaderboard.find((winner) => match.teamAway.teamName === winner.name);
+        if (!gameResults) return null;
+        gameResults.goalsFavor += match.awayTeamGoals;
+        gameResults.goalsOwn += match.homeTeamGoals;
+        gameResults.totalPoints += 3;
+        gameResults.totalGames += 1;
+        gameResults.totalVictories += 1;
+      }
+    });
+  }
+
+  public async teamAwayLoser(leaderboard: ILeaderboard[]) {
+    (await this.finishedMatches()).forEach((match) => {
+      if (match.homeTeamGoals > match.awayTeamGoals) {
+        const gameResults = leaderboard.find((loser) => match.teamAway.teamName === loser.name);
+        if (!gameResults) return null;
+        gameResults.goalsFavor += match.awayTeamGoals;
+        gameResults.goalsOwn += match.homeTeamGoals;
+        gameResults.totalGames += 1;
+        gameResults.totalLosses += 1;
+      }
+    });
+  }
+
+  public async teamAwayDraw(leaderboard: ILeaderboard[]) {
+    (await this.finishedMatches()).forEach((match) => {
+      if (match.homeTeamGoals === match.awayTeamGoals) {
+        const gameResults = leaderboard.find((draw) => match.teamAway.teamName === draw.name);
+        if (!gameResults) return null;
+        gameResults.goalsFavor += match.awayTeamGoals;
+        gameResults.goalsOwn += match.homeTeamGoals;
+        gameResults.totalPoints += 1;
+        gameResults.totalGames += 1;
+        gameResults.totalDraws += 1;
+      }
+    });
+  }
+
+  public async goalsBalanceAway(leaderboard: ILeaderboard[]) {
+    (await this.finishedMatches()).forEach((match) => {
+      const teamData = leaderboard.find((team) => match.teamAway.teamName === team.name);
+      if (!teamData) return null;
+      teamData.goalsBalance = (teamData.goalsFavor - teamData.goalsOwn);
+    });
+  }
+
+  public async efficiencyAway(leaderboard: ILeaderboard[]) {
+    (await this.finishedMatches()).forEach((match) => {
+      const teamData = leaderboard.find((team) => match.teamAway.teamName === team.name);
       if (!teamData) return null;
       const percentageUse = (teamData.totalPoints / (teamData.totalGames * 3)) * 100;
       teamData.efficiency = Number(percentageUse.toFixed(2));
@@ -112,15 +170,28 @@ export default class LeaderboardService {
   }
 
   public async getHomeLeaderboard() {
-    const board = await this.blankLeaderboard();
+    const boardHome = await this.blankLeaderboard();
     await Promise.all([
-      this.teamHomeWinner(board),
-      this.teamHomeLoser(board),
-      this.teamHomeDraw(board),
+      this.teamHomeWinner(boardHome),
+      this.teamHomeLoser(boardHome),
+      this.teamHomeDraw(boardHome),
     ]);
-    await this.goalsBalance(board);
-    await this.efficiency(board);
-    LeaderboardService.sortLeaderboard(board);
-    return board;
+    await this.goalsBalanceHome(boardHome);
+    await this.efficiencyHome(boardHome);
+    LeaderboardService.sortLeaderboard(boardHome);
+    return boardHome;
+  }
+
+  public async getAwayLeaderboard() {
+    const boardAway = await this.blankLeaderboard();
+    await Promise.all([
+      this.teamAwayWinner(boardAway),
+      this.teamAwayLoser(boardAway),
+      this.teamAwayDraw(boardAway),
+    ]);
+    await this.goalsBalanceAway(boardAway);
+    await this.efficiencyAway(boardAway);
+    LeaderboardService.sortLeaderboard(boardAway);
+    return boardAway;
   }
 }
