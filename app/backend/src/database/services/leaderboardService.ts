@@ -1,29 +1,9 @@
 import MatchesService from './matchesService';
-import TeamsService from './teamsService';
+
 import ILeaderboard from '../../interfaces/ILeaderboard';
 
 export default class LeaderboardService {
   public matchesService = new MatchesService();
-
-  public teamService = new TeamsService();
-
-  public async blankLeaderboard() {
-    const allTeam = await this.teamService.getTeams();
-
-    const boardInitial = allTeam.map((team) => ({
-      name: team.teamName,
-      totalPoints: 0,
-      totalGames: 0,
-      totalVictories: 0,
-      totalDraws: 0,
-      totalLosses: 0,
-      goalsFavor: 0,
-      goalsOwn: 0,
-      goalsBalance: 0,
-      efficiency: 0,
-    }));
-    return boardInitial;
-  }
 
   public async finishedMatches() {
     const allMatches = await this.matchesService.getAllMatches();
@@ -169,29 +149,33 @@ export default class LeaderboardService {
       });
   }
 
-  public async getHomeLeaderboard() {
-    const boardHome = await this.blankLeaderboard();
+  public async getHomeLeaderboard(leaderboardHome: ILeaderboard[]) {
     await Promise.all([
-      this.teamHomeWinner(boardHome),
-      this.teamHomeLoser(boardHome),
-      this.teamHomeDraw(boardHome),
+      this.teamHomeWinner(leaderboardHome),
+      this.teamHomeLoser(leaderboardHome),
+      this.teamHomeDraw(leaderboardHome),
     ]);
-    await this.goalsBalanceHome(boardHome);
-    await this.efficiencyHome(boardHome);
-    LeaderboardService.sortLeaderboard(boardHome);
-    return boardHome;
+    await this.goalsBalanceHome(leaderboardHome);
+    await this.efficiencyHome(leaderboardHome);
+    LeaderboardService.sortLeaderboard(leaderboardHome);
+    return leaderboardHome;
   }
 
-  public async getAwayLeaderboard() {
-    const boardAway = await this.blankLeaderboard();
+  public async getAwayLeaderboard(leaderboardAway: ILeaderboard[]) {
     await Promise.all([
-      this.teamAwayWinner(boardAway),
-      this.teamAwayLoser(boardAway),
-      this.teamAwayDraw(boardAway),
+      this.teamAwayWinner(leaderboardAway),
+      this.teamAwayLoser(leaderboardAway),
+      this.teamAwayDraw(leaderboardAway),
     ]);
-    await this.goalsBalanceAway(boardAway);
-    await this.efficiencyAway(boardAway);
-    LeaderboardService.sortLeaderboard(boardAway);
-    return boardAway;
+    await this.goalsBalanceAway(leaderboardAway);
+    await this.efficiencyAway(leaderboardAway);
+    LeaderboardService.sortLeaderboard(leaderboardAway);
+    return leaderboardAway;
+  }
+
+  public async getLeaderboard(leaderboard: ILeaderboard[]) {
+    await this.getHomeLeaderboard(leaderboard);
+    await this.getAwayLeaderboard(leaderboard);
+    return leaderboard;
   }
 }
