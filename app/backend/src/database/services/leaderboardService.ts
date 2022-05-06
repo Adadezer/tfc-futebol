@@ -127,7 +127,7 @@ export default class LeaderboardService {
     });
   }
 
-  static sortLeaderboard(leaderboard: ILeaderboard[]) {
+  public static sortLeaderboard(leaderboard: ILeaderboard[]) {
     // static para lidar com a falta do this
     (leaderboard).sort((a, b) => b.totalPoints - a.totalPoints).sort((a, b) => {
       if (a.totalPoints === b.totalPoints) { return b.totalVictories - a.totalVictories; } return 0;
@@ -137,9 +137,7 @@ export default class LeaderboardService {
       } return 0;
     }).sort((a, b) => {
       if ((a.totalPoints === b.totalPoints) && (a.totalVictories === b.totalVictories)
-        && (a.goalsBalance === b.goalsBalance)) {
-        return b.goalsFavor - a.goalsFavor;
-      } return 0;
+        && (a.goalsBalance === b.goalsBalance)) { return b.goalsFavor - a.goalsFavor; } return 0;
     })
       .sort((a, b) => {
         if ((a.totalPoints === b.totalPoints) && (a.totalVictories === b.totalVictories)
@@ -147,6 +145,7 @@ export default class LeaderboardService {
           return b.goalsOwn - a.goalsOwn;
         } return 0;
       });
+    return leaderboard;
   }
 
   public async getHomeLeaderboard(leaderboardHome: ILeaderboard[]) {

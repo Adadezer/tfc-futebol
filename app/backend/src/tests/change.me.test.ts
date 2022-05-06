@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
+import {describe, it, before, after} from 'mocha';
 
 import { app } from '../app';
 import * as bcryptjs from 'bcryptjs';
@@ -9,7 +10,8 @@ import TeamsModel from '../database/models/teams';
 import { allTeams, team } from './mocks/mockTeams';
 import MatchesModel from '../database/models/matches';
 import IMatchesCustom from '../interfaces/IMatchesCustom';
-import { matchesFull, matchesTrue, matchesFalse, matchCreatedProgressTrue, matchCreatedProgressFalse } from './mocks/mockMatches';
+import { matchesFull, matchesTrue, matchesFalse, matchCreatedProgressTrue, matchCreatedProgressFalse, matchCreatedFullProgressFalse } from './mocks/mockMatches';
+import { homeLeaderboard, awayLeaderboard, leaderboard } from './mocks/mockLeaderboard';
 
 import { Response } from 'superagent';
 
@@ -31,14 +33,103 @@ describe('ROTA LOGIN', () => {
         id: 1,
         username: 'user1',
         role: 'admin',
-        email: 'email@email.com',
-        password: '123456789'
+        email: 'admin@admin.com',
+        password: 'secret_admin'
     } as UsersModel);
   });
 
   after(()=>{
     (UsersModel.findOne as sinon.SinonStub).restore();
   })
+
+  describe('POST', () => {
+    it('verifica mensagem de erro quando apenas o email é passado', async () => {
+      chaiHttpResponse = await chai.request(app).post('/login').send({email: 'admin@admin.com'});
+        expect(chaiHttpResponse).to.have.status(400);
+        expect(chaiHttpResponse.body.message).to.be.equal('All fields must be filled');
+    });
+
+    it('verifica mensagem de erro quando apenas a senha é passada', async () => {
+      chaiHttpResponse = await chai.request(app).post('/login').send({password: 'pass'});
+        expect(chaiHttpResponse).to.have.status(400);
+        expect(chaiHttpResponse.body.message).to.be.equal('All fields must be filled');
+    });
+
+    it('verifica se o email está no formato correto', async () => {
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'email.com.br',
+        password: 'secret_admin'
+      });
+        expect(chaiHttpResponse).to.have.status(401);
+        expect(chaiHttpResponse.body.message).to.be.equal('Incorrect email or password');
+    });
+
+    it('verifica se a senha está no formato correto', async () => {
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'admin@admin.com',
+        password: 'pass'
+      });
+        expect(chaiHttpResponse).to.have.status(401);
+        expect(chaiHttpResponse.body.message).to.be.equal('Incorrect email or password');
+    });
+
+    it('verifica se a senha de login está correta', async () => {
+      sinon
+      .stub(bcryptjs, "compare")
+      .resolves(false);
+      
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'admin@admin.com',
+        password: 'secret_admin'
+      });
+      
+      expect(chaiHttpResponse).to.have.status(401);
+      expect(chaiHttpResponse.body.message).to.be.equal('email or password not exist');
+    });
+
+    it('verifica se o login é válido', async () => {
+      (bcryptjs.compare as sinon.SinonStub).restore();
+      (UsersModel.findOne as sinon.SinonStub).restore();
+      sinon
+      .stub(bcryptjs, "compare")
+      .resolves(true);
+
+      sinon
+      .stub(UsersModel, "findOne")
+      .resolves({
+        id: 1,
+        username: 'user1',
+        role: 'admin',
+        email: 'admin@admin.com',
+        password: 'secret_admin'
+      } as UsersModel);
+      
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'admin@admin.com',
+        password: 'secret_admin'
+      });
+      
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body.user).to.be.keys('id', 'username', 'role', 'email');
+      expect(chaiHttpResponse.body.token).to.an('string');
+    });
+
+    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (bcryptjs.compare as sinon.SinonStub).restore();
+      (UsersModel.findOne as sinon.SinonStub).restore();
+      sinon
+        .stub(UsersModel, "findOne")
+        .throws('');
+
+      chaiHttpResponse = await chai.request(app).post('/login').send({
+        email: 'admin@admin.com',
+        password: 'secret_admin'
+      });
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
 
   describe('GET', () => {
     it('caso o token não exista', async () => {
@@ -57,116 +148,22 @@ describe('ROTA LOGIN', () => {
     });
 
     it('verifica o retorno do token', async () => {
-      // não precisa mockar aqui, pois o mock acima ja tem o email e o role
-      chaiHttpResponse = await chai.request(app).get('/login/validate')
-      .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
-
-      expect(chaiHttpResponse).to.have.status(200);
-      expect(chaiHttpResponse.body).to.be.equal('admin');
-    });
-  });
-
-  describe('POST', () => {
-    it('verifica mensagem de erro quando apenas o email é passado', async () => {
-      chaiHttpResponse = await chai.request(app).post('/login').send({email: 'email@email.com'});
-        expect(chaiHttpResponse).to.have.status(400);
-        expect(chaiHttpResponse.body.message).to.be.equal('All fields must be filled');
-    });
-
-    it('verifica mensagem de erro quando apenas a senha é passada', async () => {
-      chaiHttpResponse = await chai.request(app).post('/login').send({password: 'pass'});
-        expect(chaiHttpResponse).to.have.status(400);
-        expect(chaiHttpResponse.body.message).to.be.equal('All fields must be filled');
-    });
-
-    it('verifica se o email está no formato correto', async () => {
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email.com.br',
-        password: 'pass'
-      });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('Incorrect email or password');
-    });
-
-    it('verifica se a senha está no formato correto', async () => {
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email@email.com',
-        password: 'pass'
-      });
-        expect(chaiHttpResponse).to.have.status(401);
-        expect(chaiHttpResponse.body.message).to.be.equal('Incorrect email or password');
-    });
-
-    it('verifica se o email de login está cadastrado', async () => {
       (UsersModel.findOne as sinon.SinonStub).restore();
-      sinon
-      .stub(UsersModel, "findOne")
-      .resolves(null);
-      
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'emaildfgfd@email.com',
-        password: '123456789'
-      });
-      
-      expect(chaiHttpResponse).to.have.status(401);
-      expect(chaiHttpResponse.body.message).to.be.equal('email not exist');
-    });
-
-    it('verifica se a senha de login está correta', async () => {
-      sinon
-      .stub(bcryptjs, "compare")
-      .resolves(false);
-      
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email@email.com',
-        password: 'senhaErrada'
-      });
-      
-      expect(chaiHttpResponse).to.have.status(401);
-      expect(chaiHttpResponse.body.message).to.be.equal('email not exist');
-    });
-
-    it('verifica se o login é válido', async () => {
-      (bcryptjs.compare as sinon.SinonStub).restore();
-      (UsersModel.findOne as sinon.SinonStub).restore();
-      sinon
-      .stub(bcryptjs, "compare")
-      .resolves(true);
-
       sinon
       .stub(UsersModel, "findOne")
       .resolves({
         id: 1,
         username: 'user1',
         role: 'admin',
-        email: 'email@email.com',
-        password: '123456789'
-      } as UsersModel);
+        email: 'admin@admin.com',
+        password: 'secret_admin'
+    } as UsersModel);
       
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email@email.com',
-        password: '123456789'
-      });
-      
+      chaiHttpResponse = await chai.request(app).get('/login/validate')
+      .set({ authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUwOTExNjEzLCJleHAiOjE2NTYwOTU2MTN9._HI8UvFthcoxTqDJ8LtDP2QU--H-Y_DiwvKNnjDt2SA'});
+
       expect(chaiHttpResponse).to.have.status(200);
-      expect(chaiHttpResponse.body.user).to.be.keys('id', 'username', 'role', 'email');
-      expect(chaiHttpResponse.body.token).to.an('string');
-    });
-
-    it('verifica se retorna mensagem padrão caso erro caia no catch', async () => {
-      (bcryptjs.compare as sinon.SinonStub).restore();
-      (UsersModel.findOne as sinon.SinonStub).restore();
-      sinon
-        .stub(UsersModel, "findOne")
-        .throws('');
-
-      chaiHttpResponse = await chai.request(app).post('/login').send({
-        email: 'email@email.com',
-        password: '123456789'
-      });
-
-      expect(chaiHttpResponse).to.have.status(500);
-      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+      expect(chaiHttpResponse.body).to.be.equal('admin');
     });
   });
 });
@@ -455,6 +452,111 @@ describe('ROTA MATCHES', () => {
 
       chaiHttpResponse = await chai.request(app).patch('/matches/40')
       .set({authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNjUxMjQxMTgxLCJleHAiOjE2NTY0MjUxODF9.TQ8bv-LTcaWq7XlDToAEFjE0Xfe7R07jcL-7Vvqt8lI'});
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
+});
+
+describe('LEADERBOARD', () => {
+  describe('home Leaderboard', () => {
+    let chaiHttpResponse: Response;
+
+    before(async () => {
+      sinon
+        .stub(MatchesModel, "findAll")
+        .resolves(matchCreatedFullProgressFalse as IMatchesCustom[])
+
+      // sinon
+      //   .stub(LeaderBoardService, "sortLeaderboard")
+      //   .resolves( homeLeaderboard as ILeaderboard[]);
+    });
+
+    after(()=>{
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+    })
+
+    it('(/home) => verifica se é retornado o leaderboard do home', async () => {
+      chaiHttpResponse = await chai.request(app).get('/leaderboard/home');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(homeLeaderboard);
+    });
+
+    it('(/home) => verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+      sinon
+        .stub(MatchesModel, "findAll")
+        .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/leaderboard/home');
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
+
+  describe('away Leaderboard', () => {
+    let chaiHttpResponse: Response;
+
+    before(async () => {
+      sinon
+        .stub(MatchesModel, "findAll")
+        .resolves(matchCreatedFullProgressFalse as IMatchesCustom[])
+    });
+
+    after(()=>{
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+    })
+
+    it('(/away) => verifica se é retornado o leaderboard do away', async () => {
+      chaiHttpResponse = await chai.request(app).get('/leaderboard/away');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(awayLeaderboard);
+    });
+
+    it('(/away) => verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+      sinon
+        .stub(MatchesModel, "findAll")
+        .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/leaderboard/away');
+
+      expect(chaiHttpResponse).to.have.status(500);
+      expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
+    });
+  });
+
+  describe('Leaderboard geral', () => {
+    let chaiHttpResponse: Response;
+
+    before(async () => {
+      sinon
+        .stub(MatchesModel, "findAll")
+        .resolves(matchCreatedFullProgressFalse as IMatchesCustom[])
+    });
+
+    after(()=>{
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+    })
+
+    it('(/) => verifica se é retornado o leaderboard geral', async () => {
+      chaiHttpResponse = await chai.request(app).get('/leaderboard');
+
+      expect(chaiHttpResponse).to.have.status(200);
+      expect(chaiHttpResponse.body).to.be.deep.equal(leaderboard);
+    });
+
+    it('(/) => verifica se retorna mensagem padrão caso erro caia no catch', async () => {
+      (MatchesModel.findAll as sinon.SinonStub).restore();
+      sinon
+        .stub(MatchesModel, "findAll")
+        .throws('');
+
+      chaiHttpResponse = await chai.request(app).get('/leaderboard');
 
       expect(chaiHttpResponse).to.have.status(500);
       expect(chaiHttpResponse.body.error).to.be.equal('Internal Server Error');
