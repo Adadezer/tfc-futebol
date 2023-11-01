@@ -1,7 +1,8 @@
 # ⚽ O que é a aplicação
  
 Desenvolvido enquanto estudante da trybe no módulo de Back-End, foi disponiblizado pela Trybe um front-end já pronto. 
-	O projeto é a integração do back com esse front, e ele mostra a classificação de um campeonato de futebol. Nele é possível, editar, atualizar, adicionar e ver o ranking do campeonato, isso se o usuário estiver logado, e com permissão para tal. 
+
+O projeto é a integração do back com esse front, e ele mostra a classificação de um campeonato de futebol. Nele é possível, editar, atualizar, adicionar e ver o ranking do campeonato, isso se o usuário estiver logado, e com permissão para tal. 
 
 # 🥅 Detalhes da aplicação  
   
