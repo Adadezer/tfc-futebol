@@ -67,14 +67,12 @@ Ps²: Verifique a versão do seu Node, a versão usada foi a v16.15.0, caso ocor
 
 1- Abra o terminal, e clone o repositório 
 
-- `https://github.com/Adadezer/tfc-futebol.git`
-ou 
- - `git clone git@github.com:Adadezer/tfc-futebol.git`.
+- `https://github.com/Adadezer/tfc-futebol.git` ou `git clone git@github.com:Adadezer/tfc-futebol.git`.
 
 2- Entre na pasta do repositório que você acabou de clonar:
  - `cd tfc-futebol`
 
- 3- suba o container:
+ 3- Suba o container:
  - `npm run compose:up`
   
 O docker irá iniciar o processo de instalação de dependências, tanto do frontend quanto do backend, esse é um processo demorado.
@@ -83,6 +81,9 @@ Quando ele for concluído, o terminal será liberado
  4- Abra a guia no navegador
  - Acesse `http://localhost:3000` para ver a aplicação.
  Caso dê algum erro de conexão, aguarde uns instantes pois os dados estão sendo recuperados da API.
+
+5- Para derrubar o container:
+- `npm run compose:down`
 
 ##
 <span >
