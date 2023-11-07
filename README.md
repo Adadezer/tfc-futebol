@@ -54,7 +54,6 @@ Caso queira logar na aplicação utilize o seguinte usuário:
 login: admin@admin.com
 senha: secret_admin 
 ```
-A API pode ser acessada pela porta  `3001`
 
 Ps: Caso seu navegador tente acessar a página através do protocolo HTTPS e acuse erro, será necessário alterar manualmente a URL para o protocolo HTTP.
 
